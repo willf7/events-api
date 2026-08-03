@@ -12,6 +12,7 @@ import java.util.Date;
 import java.util.UUID;
 
 @Table(name = "coupon")
+@Entity
 @Getter
 @Setter
 @NoArgsConstructor
