@@ -1,6 +1,8 @@
 package com.events.api.config;
 
-import com.amazonaws.auth.DefaultAWSCredentialsProviderChain;
+import com.amazonaws.auth.AWSStaticCredentialsProvider;
+import com.amazonaws.auth.BasicAWSCredentials;
+import com.amazonaws.client.builder.AwsClientBuilder;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import org.springframework.beans.factory.annotation.Value;
@@ -9,15 +11,39 @@ import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class AWSConfig {
-    @Value("${aws.region}")
-    private String awsRegion;
+    @Value("${storage.access-key}")
+    private String accessKey;
+
+    @Value("${storage.secret-key}")
+    private String secretKey;
+
+    @Value("${storage.endpoint}")
+    private String endpoint;
+
+    @Value("${storage.region}")
+    private String region;
 
     @Bean
-    public AmazonS3 createAmazonS3Instance() {
+    public AmazonS3 amazonS3() {
+
+        BasicAWSCredentials credentials =
+                new BasicAWSCredentials(
+                        accessKey,
+                        secretKey
+                );
+
         return AmazonS3ClientBuilder
                 .standard()
-                .withCredentials(new DefaultAWSCredentialsProviderChain())
-                .withRegion(awsRegion)
+                .withCredentials(
+                        new AWSStaticCredentialsProvider(credentials)
+                )
+                .withEndpointConfiguration(
+                        new AwsClientBuilder.EndpointConfiguration(
+                                endpoint,
+                                region
+                        )
+                )
+                .withPathStyleAccessEnabled(true)
                 .build();
     }
 }
