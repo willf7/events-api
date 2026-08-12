@@ -28,8 +28,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class EventService {
-    @Value("${aws.bucketName}")
-    private String bucketName;
+    @Value("${storage.bucket}")
+    private String bucket;
 
     @Autowired
     private AmazonS3 s3Client;
@@ -72,9 +72,9 @@ public class EventService {
 
         try {
             File file = this.convertMultipartToFile(multipartFile);
-            s3Client.putObject(bucketName, fileName, file);
+            s3Client.putObject(bucket, fileName, file);
             file.delete();
-            return s3Client.getUrl(bucketName, fileName).toString();
+            return s3Client.getUrl(bucket, fileName).toString();
         } catch (Exception e) {
             System.out.println("Erro on upload image.");
             return null;
