@@ -12,6 +12,7 @@ jobs:
   docker:
     name: Build and Push
     runs-on: ubuntu-latest
+    environment: EVENTS_API
 
     permissions:
       contents: read
@@ -46,6 +47,7 @@ jobs:
     name: Deploy to Oracle
     needs: docker
     runs-on: ubuntu-latest
+    environment: EVENTS_API
 
     steps:
       - name: Deploy
