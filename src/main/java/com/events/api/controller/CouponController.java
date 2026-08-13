@@ -3,6 +3,7 @@ package com.events.api.controller;
 import com.events.api.domain.coupon.Coupon;
 import com.events.api.domain.coupon.CouponRequestDTO;
 import com.events.api.service.CouponService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -16,7 +17,7 @@ public class CouponController {
     private CouponService couponService;
 
     @PostMapping("event/{eventId}")
-    public ResponseEntity<Coupon> create(@PathVariable UUID eventId, @RequestBody CouponRequestDTO body) {
+    public ResponseEntity<Coupon> create(@PathVariable UUID eventId, @Valid @RequestBody CouponRequestDTO body) {
         Coupon coupon = couponService.addCouponToEvent(eventId, body);
         return ResponseEntity.ok(coupon);
     }

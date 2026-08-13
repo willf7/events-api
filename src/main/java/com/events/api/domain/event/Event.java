@@ -7,7 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.Date;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Table(name = "event")
@@ -26,7 +26,7 @@ public class Event {
     private String imgUrl;
     private String eventUrl;
     private Boolean remote;
-    private Date date;
+    private OffsetDateTime date;
 
     @OneToOne(mappedBy = "event", cascade = CascadeType.ALL)
     private Address address;

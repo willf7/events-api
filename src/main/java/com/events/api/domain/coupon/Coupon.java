@@ -6,9 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-import org.springframework.data.annotation.Reference;
 
-import java.util.Date;
+import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Table(name = "coupon")
@@ -24,7 +23,7 @@ public class Coupon {
 
     private Integer discount;
     private String code;
-    private Date valid;
+    private OffsetDateTime validUntil;
 
     @ManyToOne
     @JoinColumn(name = "event_id")
