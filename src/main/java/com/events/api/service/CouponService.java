@@ -9,7 +9,7 @@ import com.events.api.repositories.EventRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.Date;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -30,12 +30,12 @@ public class CouponService {
         newCoupon.setCode(data.code());
         newCoupon.setDiscount(data.discount());
         newCoupon.setEvent(event);
-        newCoupon.setValid(new Date(data.valid()));
+        newCoupon.setValidUntil(data.validUntil());
 
         return repository.save(newCoupon);
     }
 
-    public List<Coupon> getCouponsByEvent(UUID eventId, Date currentDate) {
+    public List<Coupon> getCouponsByEvent(UUID eventId, OffsetDateTime currentDate) {
         return repository.findByIdAndValidAfter(eventId, currentDate);
     }
 }

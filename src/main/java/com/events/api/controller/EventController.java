@@ -5,15 +5,14 @@ import com.events.api.domain.event.EventDetailsDto;
 import com.events.api.domain.event.EventRequestDTO;
 import com.events.api.domain.event.EventResponseDTO;
 import com.events.api.service.EventService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDate;
-import java.time.ZoneId;
-import java.util.Date;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -23,18 +22,8 @@ public class EventController {
     @Autowired
     private EventService eventService;
 
-    @PostMapping(consumes = "multipart/form-data")
-    public ResponseEntity<Event> create(
-            @RequestParam("title") String title,
-            @RequestParam("description") String description,
-            @RequestParam("eventUrl") String eventUrl,
-            @RequestParam("city") String city,
-            @RequestParam("state") String state,
-            @RequestParam("remote") Boolean remote,
-            @RequestParam("date") Long date,
-            @RequestParam("image") MultipartFile image
-    ) {
-        EventRequestDTO eventRequestDTO = new EventRequestDTO(title, description, image, eventUrl, remote, city, state, date);
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Event> create(@Valid @ModelAttribute EventRequestDTO eventRequestDTO) {
         Event newEvent = eventService.createEvent(eventRequestDTO);
         return ResponseEntity.ok(newEvent);
     }
@@ -51,24 +40,17 @@ public class EventController {
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String title,
             @RequestParam(required = false) String city,
-            @RequestParam(required = false) String uf,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) Date endDate
+            @RequestParam(required = false) String state,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime endDate
     ) {
         title = (title != null) ? title : "";
         city = (city != null) ? city : "";
-        uf = (uf != null) ? uf : "";
-        startDate = (startDate != null) ? startDate : new Date(0);
-        endDate = (endDate != null)
-                ? endDate
-                : Date.from(
-                LocalDate.now()
-                        .plusYears(100)
-                        .atStartOfDay(ZoneId.systemDefault())
-                        .toInstant()
-        );
+        state = (state != null) ? state : "";
+        startDate = (startDate != null) ? startDate : OffsetDateTime.now();
+        endDate = (endDate != null) ? endDate : OffsetDateTime.now().plusYears(100);
 
-        List<EventResponseDTO> events = eventService.getFilteredEvents(page, size, title, city, uf, startDate, endDate);
+        List<EventResponseDTO> events = eventService.getFilteredEvents(page, size, title, city, state, startDate, endDate);
         return ResponseEntity.ok(events);
     }
 

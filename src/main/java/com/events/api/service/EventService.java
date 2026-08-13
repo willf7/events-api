@@ -20,7 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.util.Date;
+import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
@@ -55,11 +55,11 @@ public class EventService {
         newEvent.setEventUrl(data.eventUrl());
         newEvent.setImgUrl(imgUrl);
         newEvent.setRemote(data.remote());
-        newEvent.setDate(new Date(data.date()));
+        newEvent.setDate(data.date());
 
         repository.save(newEvent);
 
-        if (!data.remote()) {
+        if (Boolean.FALSE.equals(data.remote())) {
             addressService.createAddress(newEvent, new AddressRequestDTO(data.state(), data.city()));
         }
 
@@ -91,7 +91,7 @@ public class EventService {
 
     public List<EventResponseDTO> getUpcomingEvents(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<Event> eventsPage = repository.findUpcomingEvents(new Date(), pageable);
+        Page<Event> eventsPage = repository.findUpcomingEvents(OffsetDateTime.now(), pageable);
 
         return eventsPage.map(event -> new EventResponseDTO(
                         event.getId(),
@@ -100,15 +100,15 @@ public class EventService {
                         event.getEventUrl(),
                         event.getRemote(),
                         event.getAddress() != null ? event.getAddress().getCity() : "",
-                        event.getAddress() != null ? event.getAddress().getUf() : "",
+                        event.getAddress() != null ? event.getAddress().getState() : "",
                         event.getDate(),
                         event.getImgUrl()))
                 .stream().toList();
     }
 
-    public List<EventResponseDTO> getFilteredEvents(int page, int size, String title, String city, String uf, Date startDate, Date endDate) {
+    public List<EventResponseDTO> getFilteredEvents(int page, int size, String title, String city, String state, OffsetDateTime startDate, OffsetDateTime endDate) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<Event> eventsPage = repository.findFilteredEvents(title, city, uf, startDate, endDate, pageable);
+        Page<Event> eventsPage = repository.findFilteredEvents(title, city, state, startDate, endDate, pageable);
 
         return eventsPage.map(event -> new EventResponseDTO(
                         event.getId(),
@@ -117,7 +117,7 @@ public class EventService {
                         event.getEventUrl(),
                         event.getRemote(),
                         event.getAddress() != null ? event.getAddress().getCity() : "",
-                        event.getAddress() != null ? event.getAddress().getUf() : "",
+                        event.getAddress() != null ? event.getAddress().getState() : "",
                         event.getDate(),
                         event.getImgUrl()))
                 .stream().toList();
@@ -127,13 +127,13 @@ public class EventService {
         Event event = repository.findById(eventId)
                 .orElseThrow(() -> new EntityNotFoundException("Event not found"));
 
-        List<Coupon> coupons = couponService.getCouponsByEvent(event.getId(), new Date());
+        List<Coupon> coupons = couponService.getCouponsByEvent(event.getId(), OffsetDateTime.now());
 
         List<EventDetailsDto.CouponDTO> couponDTOS = coupons.stream()
                 .map(coupon -> new EventDetailsDto.CouponDTO(
                         coupon.getCode(),
                         coupon.getDiscount(),
-                        coupon.getValid()
+                        coupon.getValidUntil()
                 )).toList();
 
         return new EventDetailsDto(
@@ -143,7 +143,7 @@ public class EventService {
                 event.getEventUrl(),
                 event.getRemote(),
                 event.getAddress() != null ?  event.getAddress().getCity() : "",
-                event.getAddress() != null ? event.getAddress().getUf() : "",
+                event.getAddress() != null ? event.getAddress().getState() : "",
                 event.getDate(),
                 event.getImgUrl(),
                 couponDTOS

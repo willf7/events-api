@@ -20,7 +20,7 @@ public class Address {
     @GeneratedValue
     private UUID id;
 
-    private String uf;
+    private String state;
     private String city;
 
     @ManyToOne
