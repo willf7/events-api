@@ -3,6 +3,7 @@ package com.events.api.service;
 import com.events.api.domain.coupon.Coupon;
 import com.events.api.domain.coupon.CouponRequestDTO;
 import com.events.api.domain.event.Event;
+import com.events.api.exceptions.EntityNotFoundException;
 import com.events.api.repositories.CouponRepository;
 import com.events.api.repositories.EventRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +23,7 @@ public class CouponService {
 
     public Coupon addCouponToEvent(UUID eventId, CouponRequestDTO data) {
         Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new IllegalArgumentException("Event not found."));
+                .orElseThrow(() -> new EntityNotFoundException("Coupon not found"));
 
         Coupon newCoupon = new Coupon();
 

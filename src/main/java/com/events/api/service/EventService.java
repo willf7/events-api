@@ -1,13 +1,13 @@
 package com.events.api.service;
 
 import com.amazonaws.services.s3.AmazonS3;
-import com.events.api.domain.address.Address;
 import com.events.api.domain.address.AddressRequestDTO;
 import com.events.api.domain.coupon.Coupon;
 import com.events.api.domain.event.Event;
 import com.events.api.domain.event.EventDetailsDto;
 import com.events.api.domain.event.EventRequestDTO;
 import com.events.api.domain.event.EventResponseDTO;
+import com.events.api.exceptions.EntityNotFoundException;
 import com.events.api.repositories.EventRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,7 +24,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 public class EventService {
@@ -126,7 +125,7 @@ public class EventService {
 
     public EventDetailsDto getEventDetails(UUID eventId) {
         Event event = repository.findById(eventId)
-                .orElseThrow(() -> new IllegalArgumentException("Event not found."));
+                .orElseThrow(() -> new EntityNotFoundException("Event not found"));
 
         List<Coupon> coupons = couponService.getCouponsByEvent(event.getId(), new Date());
 

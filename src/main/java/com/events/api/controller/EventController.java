@@ -5,7 +5,6 @@ import com.events.api.domain.event.EventDetailsDto;
 import com.events.api.domain.event.EventRequestDTO;
 import com.events.api.domain.event.EventResponseDTO;
 import com.events.api.service.EventService;
-import jakarta.websocket.server.PathParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -46,7 +45,7 @@ public class EventController {
         return ResponseEntity.ok(events);
     }
 
-    @GetMapping("filter")
+    @GetMapping("/filter")
     public ResponseEntity<List<EventResponseDTO>> filterEvents(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
