@@ -2,6 +2,7 @@ package com.events.api.controller;
 
 import com.events.api.exceptions.DuplicateResourceException;
 import com.events.api.exceptions.EntityNotFoundException;
+import com.events.api.exceptions.FileUploadException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -35,6 +36,13 @@ public class GlobalExceptionHandler {
     public ProblemDetail handleMethodArgumentNotValidException (MethodArgumentNotValidException exception) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, exception.getMessage());
         problemDetail.setTitle("Invalid argument");
+        return problemDetail;
+    }
+
+    @ExceptionHandler(FileUploadException.class)
+    public ProblemDetail handleFileUploadException(FileUploadException exception) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
+        problemDetail.setTitle("File upload failed");
         return problemDetail;
     }
 }

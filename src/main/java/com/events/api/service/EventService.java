@@ -1,6 +1,5 @@
 package com.events.api.service;
 
-import com.amazonaws.services.s3.AmazonS3;
 import com.events.api.domain.address.AddressRequestDTO;
 import com.events.api.domain.coupon.Coupon;
 import com.events.api.domain.event.Event;
@@ -8,33 +7,36 @@ import com.events.api.domain.event.EventDetailsDto;
 import com.events.api.domain.event.EventRequestDTO;
 import com.events.api.domain.event.EventResponseDTO;
 import com.events.api.exceptions.EntityNotFoundException;
+import com.events.api.exceptions.FileUploadException;
 import com.events.api.repositories.EventRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.InputStream;
 import java.time.OffsetDateTime;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 
 @Service
+@Slf4j
 public class EventService {
     @Value("${storage.bucket}")
     private String bucket;
 
-    private final AmazonS3 s3Client;
+    private final S3Client s3Client;
     private final EventRepository repository;
     private final AddressService addressService;
     private final CouponService couponService;
 
-    public EventService(AmazonS3 s3Client, EventRepository repository, AddressService addressService, CouponService couponService) {
+    public EventService(S3Client s3Client, EventRepository repository, AddressService addressService, CouponService couponService) {
         this.s3Client = s3Client;
         this.repository = repository;
         this.addressService = addressService;
@@ -42,11 +44,7 @@ public class EventService {
     }
 
     public Event createEvent(EventRequestDTO data) {
-        String imgUrl = null;
-
-        if (data.image() != null) {
-            imgUrl = this.uploadImage(data.image());
-        }
+        String imgUrl = uploadImage(data.image());
 
         Event newEvent = new Event();
         newEvent.setTitle(data.title());
@@ -68,24 +66,35 @@ public class EventService {
     private String uploadImage(MultipartFile multipartFile) {
         String fileName = UUID.randomUUID() + "-" + multipartFile.getOriginalFilename();
 
-        try {
-            File file = this.convertMultipartToFile(multipartFile);
-            s3Client.putObject(bucket, fileName, file);
-            file.delete();
-            return s3Client.getUrl(bucket, fileName).toString();
+        try (InputStream inputStream = multipartFile.getInputStream()) {
+            PutObjectRequest request = PutObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(fileName)
+                    .contentType(multipartFile.getContentType())
+                    .build();
+
+            s3Client.putObject(
+                    request,
+                    RequestBody.fromInputStream(
+                            inputStream,
+                            multipartFile.getSize()
+                    )
+            );
+
+            return s3Client.utilities()
+                    .getUrl(builder -> builder
+                            .bucket(bucket)
+                            .key(fileName))
+                    .toExternalForm();
         } catch (Exception e) {
-            System.out.println("Erro on upload image.");
-            return null;
+            log.error(
+                    "Error uploading image to S3. filename={}",
+                    fileName,
+                    e
+            );
+
+            throw new FileUploadException(e);
         }
-    }
-
-    private File convertMultipartToFile(MultipartFile multipartFile) throws IOException {
-        File convertedFile = new File(Objects.requireNonNull(multipartFile.getOriginalFilename()));
-        FileOutputStream fos = new FileOutputStream(convertedFile);
-        fos.write(multipartFile.getBytes());
-        fos.close();
-
-        return convertedFile;
     }
 
     public List<EventResponseDTO> getUpcomingEvents(int page, int size) {
