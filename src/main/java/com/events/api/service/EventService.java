@@ -9,7 +9,6 @@ import com.events.api.domain.event.EventRequestDTO;
 import com.events.api.domain.event.EventResponseDTO;
 import com.events.api.exceptions.EntityNotFoundException;
 import com.events.api.repositories.EventRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -30,17 +29,17 @@ public class EventService {
     @Value("${storage.bucket}")
     private String bucket;
 
-    @Autowired
-    private AmazonS3 s3Client;
+    private final AmazonS3 s3Client;
+    private final EventRepository repository;
+    private final AddressService addressService;
+    private final CouponService couponService;
 
-    @Autowired
-    private EventRepository repository;
-
-    @Autowired
-    private AddressService addressService;
-
-    @Autowired
-    private CouponService couponService;
+    public EventService(AmazonS3 s3Client, EventRepository repository, AddressService addressService, CouponService couponService) {
+        this.s3Client = s3Client;
+        this.repository = repository;
+        this.addressService = addressService;
+        this.couponService = couponService;
+    }
 
     public Event createEvent(EventRequestDTO data) {
         String imgUrl = null;

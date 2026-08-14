@@ -6,7 +6,6 @@ import com.events.api.domain.event.Event;
 import com.events.api.exceptions.EntityNotFoundException;
 import com.events.api.repositories.CouponRepository;
 import com.events.api.repositories.EventRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.OffsetDateTime;
@@ -15,11 +14,13 @@ import java.util.UUID;
 
 @Service
 public class CouponService {
-    @Autowired
-    private CouponRepository repository;
+    private final CouponRepository repository;
+    private final EventRepository eventRepository;
 
-    @Autowired
-    private EventRepository eventRepository;
+    public CouponService(CouponRepository repository, EventRepository eventRepository) {
+        this.repository = repository;
+        this.eventRepository = eventRepository;
+    }
 
     public Coupon addCouponToEvent(UUID eventId, CouponRequestDTO data) {
         Event event = eventRepository.findById(eventId)
