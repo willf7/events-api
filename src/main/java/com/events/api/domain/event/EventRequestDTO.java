@@ -14,6 +14,7 @@ public record EventRequestDTO(
         @Size(max = 50, message = "The description cannot exceed 50 characters")
         String description,
 
+        @NotNull(message = "The image is required")
         MultipartFile image,
 
         @NotBlank(message = "The event url can't be empty")
