@@ -2,6 +2,7 @@ package com.events.api.controller;
 
 import com.events.api.config.TokenConfig;
 import com.events.api.domain.user.User;
+import com.events.api.domain.user.UserRole;
 import com.events.api.domain.user.dto.request.LoginRequestDTO;
 import com.events.api.domain.user.dto.request.RegisterUserRequestDTO;
 import com.events.api.domain.user.dto.response.LoginResponseDTO;
@@ -20,7 +21,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/auth")
 public class AuthController {
     @Autowired
     private UserRepository repository;
@@ -50,6 +51,7 @@ public class AuthController {
         newUser.setName(request.name());
         newUser.setEmail(request.email());
         newUser.setPassword(passwordEncoder.encode(request.password()));
+        newUser.setRole(UserRole.CUSTOMER);
 
         repository.save(newUser);
 

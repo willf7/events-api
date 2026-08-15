@@ -25,7 +25,6 @@ public class AWSConfig {
 
     @Bean
     public AmazonS3 amazonS3() {
-
         BasicAWSCredentials credentials =
                 new BasicAWSCredentials(
                         accessKey,

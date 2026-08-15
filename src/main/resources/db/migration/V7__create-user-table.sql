@@ -1,4 +1,4 @@
-CREATE TYPE user_role AS ENUM ('ADMIN', 'CUSTOMER', 'MODERATOR');
+CREATE TYPE user_role AS ENUM ('ADMIN', 'CUSTOMER');
 
 CREATE TABLE users (
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,

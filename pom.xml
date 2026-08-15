@@ -107,6 +107,11 @@
 			<version>4.6.0</version>
 			<scope>compile</scope>
 		</dependency>
+		<dependency>
+			<groupId>org.bouncycastle</groupId>
+			<artifactId>bcprov-jdk18on</artifactId>
+			<version>1.84</version>
+		</dependency>
 	</dependencies>
 	<build>
 		<plugins>
