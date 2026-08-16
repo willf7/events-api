@@ -2,6 +2,7 @@ package com.events.api.controller;
 
 import com.events.api.exceptions.DuplicateResourceException;
 import com.events.api.exceptions.EntityNotFoundException;
+import com.events.api.exceptions.FileUploadException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.security.access.AccessDeniedException;
@@ -48,10 +49,17 @@ public class GlobalExceptionHandler {
         return problemDetail;
     }
 
-    @ExceptionHandler(UsernameNotFoundException.class)
+@ExceptionHandler(UsernameNotFoundException.class)
     public ProblemDetail handleUsernameNotFoundException (UsernameNotFoundException exception) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, exception.getMessage());
         problemDetail.setTitle("User not found");
+        return problemDetail;
+    }
+
+    @ExceptionHandler(FileUploadException.class)
+    public ProblemDetail handleFileUploadException(FileUploadException exception) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR, exception.getMessage());
+        problemDetail.setTitle("File upload failed");
         return problemDetail;
     }
 }
