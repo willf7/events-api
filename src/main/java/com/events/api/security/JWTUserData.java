@@ -1,6 +1,5 @@
-package com.events.api.config;
+package com.events.api.security;
 
-import com.events.api.domain.user.Role;
 import lombok.Builder;
 
 import java.util.List;

@@ -1,7 +1,6 @@
-package com.events.api.config;
+package com.events.api.security;
 
 import jakarta.servlet.DispatcherType;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -28,11 +27,16 @@ public class SecurityConfig {
 
     private static final String[] PUBLIC_POST_ROUTES = {
         "/api/auth/login",
+        "/api/auth/logout",
+        "/api/auth/refresh",
         "/api/auth/register"
     };
 
-    @Autowired
-    private SecurityFilter securityFilter;
+    private final SecurityFilter securityFilter;
+
+    public SecurityConfig(SecurityFilter securityFilter) {
+        this.securityFilter = securityFilter;
+    }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {

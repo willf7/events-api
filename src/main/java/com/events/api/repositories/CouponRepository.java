@@ -10,5 +10,5 @@ import java.util.UUID;
 
 public interface CouponRepository extends JpaRepository<Coupon, UUID> {
     @Query("SELECT c FROM Coupon c WHERE c.event.id = :eventId AND c.validUntil >= :currentDate")
-    List<Coupon> findByIdAndValidAfter(UUID eventId, OffsetDateTime currentDate);
+    List<Coupon> findByEventIdAndValidAfter(UUID eventId, OffsetDateTime currentDate);
 }

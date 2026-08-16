@@ -1,4 +1,4 @@
-package com.events.api.domain.user.dto.request;
+package com.events.api.domain.user;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;

@@ -1,4 +1,4 @@
-package com.events.api.config;
+package com.events.api.security;
 
 import com.events.api.domain.user.Role;
 import com.events.api.repositories.EventRepository;

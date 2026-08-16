@@ -1,42 +1,46 @@
 package com.events.api.controller;
 
-import com.events.api.domain.event.Event;
-import com.events.api.domain.event.EventDetailsDto;
+import com.events.api.domain.common.PageResponseDTO;
+import com.events.api.domain.event.EventDetailsDTO;
 import com.events.api.domain.event.EventRequestDTO;
 import com.events.api.domain.event.EventResponseDTO;
+import com.events.api.security.JWTUserData;
 import com.events.api.service.EventService;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.OffsetDateTime;
-import java.util.List;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/event")
 public class EventController {
-    @Autowired
-    private EventService eventService;
+    private final EventService eventService;
+
+    public EventController(EventService eventService) {
+        this.eventService = eventService;
+    }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<Event> create(@Valid @ModelAttribute EventRequestDTO eventRequestDTO) {
-        Event newEvent = eventService.createEvent(eventRequestDTO);
+    public ResponseEntity<EventResponseDTO> create(@Valid @ModelAttribute EventRequestDTO eventRequestDTO) {
+        JWTUserData userData = (JWTUserData) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        EventResponseDTO newEvent = eventService.createEvent(eventRequestDTO, userData);
         return ResponseEntity.ok(newEvent);
     }
 
     @GetMapping
-    public ResponseEntity<List<EventResponseDTO>> getEvents(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
-        List<EventResponseDTO> events = eventService.getUpcomingEvents(page, size);
+    public ResponseEntity<PageResponseDTO<EventResponseDTO>> getEvents(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size) {
+        PageResponseDTO<EventResponseDTO> events = eventService.getUpcomingEvents(page, size);
         return ResponseEntity.ok(events);
     }
 
     @GetMapping("/filter")
-    public ResponseEntity<List<EventResponseDTO>> filterEvents(
+    public ResponseEntity<PageResponseDTO<EventResponseDTO>> filterEvents(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(required = false) String title,
@@ -51,19 +55,21 @@ public class EventController {
         startDate = (startDate != null) ? startDate : OffsetDateTime.now();
         endDate = (endDate != null) ? endDate : OffsetDateTime.now().plusYears(100);
 
-        List<EventResponseDTO> events = eventService.getFilteredEvents(page, size, title, city, state, startDate, endDate);
+        PageResponseDTO<EventResponseDTO> events = eventService.getFilteredEvents(page, size, title, city, state, startDate, endDate);
         return ResponseEntity.ok(events);
     }
 
     @GetMapping("/{eventId}")
-    public ResponseEntity<EventDetailsDto> getEvent(@PathVariable("eventId") UUID eventId) {
-        EventDetailsDto event = eventService.getEventDetails(eventId);
+    public ResponseEntity<EventDetailsDTO> getEvent(@PathVariable("eventId") UUID eventId) {
+        EventDetailsDTO event = eventService.getEventDetails(eventId);
         return ResponseEntity.ok(event);
     }
 
     @PreAuthorize("hasRole('ADMIN') or @eventAuth.canModify(#eventId)")
     @DeleteMapping("/{eventId}")
-    public void deleteEvent(@PathVariable("eventId") UUID eventId) {
+    public ResponseEntity<Void> deleteEvent(@PathVariable("eventId") UUID eventId) {
         eventService.deleteEvent(eventId);
+
+        return ResponseEntity.noContent().build();
     }
 }

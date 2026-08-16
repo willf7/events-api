@@ -25,7 +25,7 @@ public class Coupon {
     private String code;
     private OffsetDateTime validUntil;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id")
     private Event event;
 }

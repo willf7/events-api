@@ -1,6 +1,8 @@
 package com.events.api.domain.event;
 
+import com.events.api.validation.ValidImage;
 import jakarta.validation.constraints.*;
+import org.hibernate.validator.constraints.URL;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.time.OffsetDateTime;
@@ -15,10 +17,11 @@ public record EventRequestDTO(
         String description,
 
         @NotNull(message = "The image is required")
+        @ValidImage
         MultipartFile image,
 
         @NotBlank(message = "The event url can't be empty")
-        @Size(max = 200, message = "The event url cannot exceed 200 characters")
+        @URL
         String eventUrl,
 
         @NotNull(message = "The remote field is required")

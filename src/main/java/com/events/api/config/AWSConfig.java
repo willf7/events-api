@@ -21,7 +21,7 @@ public class AWSConfig {
     @Bean
     public S3Client s3Client() {
         return S3Client.builder()
-                .credentialsProvider(DefaultCredentialsProvider.create())
+                .credentialsProvider(DefaultCredentialsProvider.builder().build())
                 .endpointOverride(URI.create(endpoint))
                 .region(Region.of(region))
                 .serviceConfiguration(S3Configuration.builder()

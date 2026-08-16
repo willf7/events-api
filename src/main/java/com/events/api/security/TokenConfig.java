@@ -1,4 +1,4 @@
-package com.events.api.config;
+package com.events.api.security;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.algorithms.Algorithm;
@@ -14,10 +14,10 @@ import java.util.UUID;
 
 @Component
 public class TokenConfig {
-    @Value("${jwt.secret}")
+    @Value("${authentication.access-secret}")
     private String secret;
 
-    public String generateToken(User user) {
+    public String generateAccessToken(User user) {
         Algorithm algorithm = Algorithm.HMAC256(secret);
         Instant now = Instant.now();
 
@@ -25,7 +25,7 @@ public class TokenConfig {
                 .withSubject(user.getId().toString())
                 .withClaim("roles", user.getRoles().stream().map(Enum::name).toList())
                 .withIssuedAt(now)
-                .withExpiresAt(now.plusSeconds(86400))
+                .withExpiresAt(now.plusSeconds(1200))
                 .sign(algorithm);
     }
 

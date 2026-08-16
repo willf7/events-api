@@ -1,4 +1,4 @@
-package com.events.api.domain.user.dto.response;
+package com.events.api.domain.user;
 
 public record RegisterUserResponseDTO(String name, String email) {
 }
