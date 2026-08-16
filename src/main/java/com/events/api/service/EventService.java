@@ -1,18 +1,22 @@
 package com.events.api.service;
 
 import com.amazonaws.services.s3.AmazonS3;
+import com.events.api.config.JWTUserData;
 import com.events.api.domain.address.AddressRequestDTO;
 import com.events.api.domain.coupon.Coupon;
 import com.events.api.domain.event.Event;
 import com.events.api.domain.event.EventDetailsDto;
 import com.events.api.domain.event.EventRequestDTO;
 import com.events.api.domain.event.EventResponseDTO;
+import com.events.api.domain.user.User;
 import com.events.api.exceptions.EntityNotFoundException;
 import com.events.api.repositories.EventRepository;
+import com.events.api.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -33,15 +37,20 @@ public class EventService {
     private final EventRepository repository;
     private final AddressService addressService;
     private final CouponService couponService;
+    private final UserRepository userRepository;
 
-    public EventService(AmazonS3 s3Client, EventRepository repository, AddressService addressService, CouponService couponService) {
+    public EventService(AmazonS3 s3Client, EventRepository repository, AddressService addressService, CouponService couponService, UserRepository userRepository) {
         this.s3Client = s3Client;
         this.repository = repository;
         this.addressService = addressService;
         this.couponService = couponService;
+        this.userRepository = userRepository;
     }
 
     public Event createEvent(EventRequestDTO data) {
+        JWTUserData userData = (JWTUserData) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        User owner = userRepository.findById(userData.userId())
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
         String imgUrl = null;
 
         if (data.image() != null) {
@@ -55,6 +64,7 @@ public class EventService {
         newEvent.setImgUrl(imgUrl);
         newEvent.setRemote(data.remote());
         newEvent.setDate(data.date());
+        newEvent.setOwner(owner);
 
         repository.save(newEvent);
 
@@ -147,5 +157,12 @@ public class EventService {
                 event.getImgUrl(),
                 couponDTOS
                 );
+    }
+
+    public void deleteEvent(UUID eventId) {
+        Event event = repository.findById(eventId)
+                .orElseThrow(() -> new EntityNotFoundException("Event not found"));
+
+        repository.delete(event);
     }
 }

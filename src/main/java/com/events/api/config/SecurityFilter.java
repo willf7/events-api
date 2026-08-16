@@ -30,8 +30,10 @@ public class SecurityFilter extends OncePerRequestFilter {
             String token = authorizedHeader.substring("Bearer ".length());
             Optional<JWTUserData> optUser = tokenConfig.validateToken(token);
             optUser.ifPresent(userData -> {
-                List<GrantedAuthority> authorities =
-                        List.of(new SimpleGrantedAuthority("ROLE_" + userData.role()));
+                List<SimpleGrantedAuthority> authorities = userData.roles().stream()
+                        .map(SimpleGrantedAuthority::new)
+                        .toList();
+
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userData, null, authorities);
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             });

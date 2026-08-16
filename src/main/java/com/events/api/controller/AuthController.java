@@ -2,7 +2,7 @@ package com.events.api.controller;
 
 import com.events.api.config.TokenConfig;
 import com.events.api.domain.user.User;
-import com.events.api.domain.user.UserRole;
+import com.events.api.domain.user.Role;
 import com.events.api.domain.user.dto.request.LoginRequestDTO;
 import com.events.api.domain.user.dto.request.RegisterUserRequestDTO;
 import com.events.api.domain.user.dto.response.LoginResponseDTO;
@@ -19,6 +19,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Set;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -51,7 +53,7 @@ public class AuthController {
         newUser.setName(request.name());
         newUser.setEmail(request.email());
         newUser.setPassword(passwordEncoder.encode(request.password()));
-        newUser.setRole(UserRole.CUSTOMER);
+        newUser.setRoles(Set.of(Role.ROLE_USER));
 
         repository.save(newUser);
 

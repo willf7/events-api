@@ -23,7 +23,7 @@ public class TokenConfig {
 
         return JWT.create()
                 .withSubject(user.getId().toString())
-                .withClaim("role", user.getRole().name())
+                .withClaim("roles", user.getRoles().stream().map(Enum::name).toList())
                 .withIssuedAt(now)
                 .withExpiresAt(now.plusSeconds(86400))
                 .sign(algorithm);
@@ -40,7 +40,7 @@ public class TokenConfig {
             return Optional.of(
                     JWTUserData.builder()
                             .userId(UUID.fromString(decoded.getSubject()))
-                            .role(decoded.getClaim("role").asString())
+                            .roles(decoded.getClaim("roles").asList(String.class))
                             .build()
             );
         } catch (JWTVerificationException e) {

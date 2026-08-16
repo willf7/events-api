@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.OffsetDateTime;
@@ -58,5 +59,11 @@ public class EventController {
     public ResponseEntity<EventDetailsDto> getEvent(@PathVariable("eventId") UUID eventId) {
         EventDetailsDto event = eventService.getEventDetails(eventId);
         return ResponseEntity.ok(event);
+    }
+
+    @PreAuthorize("hasRole('ADMIN') or @eventAuth.canModify(#eventId)")
+    @DeleteMapping("/{eventId}")
+    public void deleteEvent(@PathVariable("eventId") UUID eventId) {
+        eventService.deleteEvent(eventId);
     }
 }

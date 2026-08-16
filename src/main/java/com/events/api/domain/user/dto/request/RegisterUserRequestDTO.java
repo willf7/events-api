@@ -1,7 +1,9 @@
 package com.events.api.domain.user.dto.request;
 
+import com.events.api.domain.user.Role;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 
 public record RegisterUserRequestDTO(
         @NotEmpty(message = "Name is required")
