@@ -1,6 +1,7 @@
 package com.events.api.domain.event;
 
 import com.events.api.domain.address.Address;
+import com.events.api.domain.user.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -30,4 +31,8 @@ public class Event {
 
     @OneToOne(mappedBy = "event", cascade = CascadeType.ALL)
     private Address address;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "owner_id")
+    private User owner;
 }

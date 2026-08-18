@@ -1,2 +1,0 @@
-ALTER TABLE coupon RENAME COLUMN valid TO valid_until;
-ALTER TABLE coupon ALTER COLUMN valid_until TYPE TIMESTAMP WITH TIME ZONE;

@@ -4,7 +4,7 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
-public record EventDetailsDto(
+public record EventDetailsDTO(
         UUID id,
         String title,
         String description,

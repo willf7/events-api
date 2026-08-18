@@ -1,14 +1,18 @@
 package com.events.api.service;
 
+import com.events.api.security.JWTUserData;
 import com.events.api.domain.address.AddressRequestDTO;
+import com.events.api.domain.common.PageResponseDTO;
 import com.events.api.domain.coupon.Coupon;
 import com.events.api.domain.event.Event;
-import com.events.api.domain.event.EventDetailsDto;
+import com.events.api.domain.event.EventDetailsDTO;
 import com.events.api.domain.event.EventRequestDTO;
 import com.events.api.domain.event.EventResponseDTO;
+import com.events.api.domain.user.User;
 import com.events.api.exceptions.EntityNotFoundException;
 import com.events.api.exceptions.FileUploadException;
 import com.events.api.repositories.EventRepository;
+import com.events.api.repositories.UserRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -35,16 +39,20 @@ public class EventService {
     private final EventRepository repository;
     private final AddressService addressService;
     private final CouponService couponService;
+    private final UserRepository userRepository;
 
-    public EventService(S3Client s3Client, EventRepository repository, AddressService addressService, CouponService couponService) {
+    public EventService(S3Client s3Client, EventRepository repository, AddressService addressService, CouponService couponService, UserRepository userRepository) {
         this.s3Client = s3Client;
         this.repository = repository;
         this.addressService = addressService;
         this.couponService = couponService;
+        this.userRepository = userRepository;
     }
 
-    public Event createEvent(EventRequestDTO data) {
-        String imgUrl = uploadImage(data.image());
+    public EventResponseDTO createEvent(EventRequestDTO data, JWTUserData user) {
+        User owner = userRepository.findById(user.userId())
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+        String imgUrl = this.uploadImage(data.image());
 
         Event newEvent = new Event();
         newEvent.setTitle(data.title());
@@ -53,6 +61,7 @@ public class EventService {
         newEvent.setImgUrl(imgUrl);
         newEvent.setRemote(data.remote());
         newEvent.setDate(data.date());
+        newEvent.setOwner(owner);
 
         repository.save(newEvent);
 
@@ -60,7 +69,17 @@ public class EventService {
             addressService.createAddress(newEvent, new AddressRequestDTO(data.state(), data.city()));
         }
 
-        return newEvent;
+        return new EventResponseDTO(
+                newEvent.getId(),
+                newEvent.getTitle(),
+                newEvent.getDescription(),
+                newEvent.getEventUrl(),
+                newEvent.getRemote(),
+                newEvent.getAddress() != null ? newEvent.getAddress().getCity() : "",
+                newEvent.getAddress() != null ? newEvent.getAddress().getState() : "",
+                newEvent.getDate(),
+                newEvent.getImgUrl()
+        );
     }
 
     private String uploadImage(MultipartFile multipartFile) {
@@ -97,54 +116,34 @@ public class EventService {
         }
     }
 
-    public List<EventResponseDTO> getUpcomingEvents(int page, int size) {
+    public PageResponseDTO<EventResponseDTO> getUpcomingEvents(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Event> eventsPage = repository.findUpcomingEvents(OffsetDateTime.now(), pageable);
 
-        return eventsPage.map(event -> new EventResponseDTO(
-                        event.getId(),
-                        event.getTitle(),
-                        event.getDescription(),
-                        event.getEventUrl(),
-                        event.getRemote(),
-                        event.getAddress() != null ? event.getAddress().getCity() : "",
-                        event.getAddress() != null ? event.getAddress().getState() : "",
-                        event.getDate(),
-                        event.getImgUrl()))
-                .stream().toList();
+        return PageResponseDTO.from(eventsPage.map(this::toResponseDTO));
     }
 
-    public List<EventResponseDTO> getFilteredEvents(int page, int size, String title, String city, String state, OffsetDateTime startDate, OffsetDateTime endDate) {
+    public PageResponseDTO<EventResponseDTO> getFilteredEvents(int page, int size, String title, String city, String state, OffsetDateTime startDate, OffsetDateTime endDate) {
         Pageable pageable = PageRequest.of(page, size);
         Page<Event> eventsPage = repository.findFilteredEvents(title, city, state, startDate, endDate, pageable);
 
-        return eventsPage.map(event -> new EventResponseDTO(
-                        event.getId(),
-                        event.getTitle(),
-                        event.getDescription(),
-                        event.getEventUrl(),
-                        event.getRemote(),
-                        event.getAddress() != null ? event.getAddress().getCity() : "",
-                        event.getAddress() != null ? event.getAddress().getState() : "",
-                        event.getDate(),
-                        event.getImgUrl()))
-                .stream().toList();
+        return PageResponseDTO.from(eventsPage.map(this::toResponseDTO));
     }
 
-    public EventDetailsDto getEventDetails(UUID eventId) {
+    public EventDetailsDTO getEventDetails(UUID eventId) {
         Event event = repository.findById(eventId)
                 .orElseThrow(() -> new EntityNotFoundException("Event not found"));
 
         List<Coupon> coupons = couponService.getCouponsByEvent(event.getId(), OffsetDateTime.now());
 
-        List<EventDetailsDto.CouponDTO> couponDTOS = coupons.stream()
-                .map(coupon -> new EventDetailsDto.CouponDTO(
+        List<EventDetailsDTO.CouponDTO> couponDTOS = coupons.stream()
+                .map(coupon -> new EventDetailsDTO.CouponDTO(
                         coupon.getCode(),
                         coupon.getDiscount(),
                         coupon.getValidUntil()
                 )).toList();
 
-        return new EventDetailsDto(
+        return new EventDetailsDTO(
                 event.getId(),
                 event.getTitle(),
                 event.getDescription(),
@@ -156,5 +155,26 @@ public class EventService {
                 event.getImgUrl(),
                 couponDTOS
                 );
+    }
+
+    public void deleteEvent(UUID eventId) {
+        Event event = repository.findById(eventId)
+                .orElseThrow(() -> new EntityNotFoundException("Event not found"));
+
+        repository.delete(event);
+    }
+
+    private EventResponseDTO toResponseDTO(Event event) {
+        return new EventResponseDTO(
+                event.getId(),
+                event.getTitle(),
+                event.getDescription(),
+                event.getEventUrl(),
+                event.getRemote(),
+                event.getAddress() != null ? event.getAddress().getCity() : "",
+                event.getAddress() != null ? event.getAddress().getState() : "",
+                event.getDate(),
+                event.getImgUrl()
+        );
     }
 }

@@ -23,7 +23,7 @@ public class Address {
     private String state;
     private String city;
 
-    @ManyToOne
+    @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id")
     private Event event;
 }

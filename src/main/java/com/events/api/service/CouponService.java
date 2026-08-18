@@ -2,6 +2,7 @@ package com.events.api.service;
 
 import com.events.api.domain.coupon.Coupon;
 import com.events.api.domain.coupon.CouponRequestDTO;
+import com.events.api.domain.coupon.CouponResponseDTO;
 import com.events.api.domain.event.Event;
 import com.events.api.exceptions.EntityNotFoundException;
 import com.events.api.repositories.CouponRepository;
@@ -22,9 +23,9 @@ public class CouponService {
         this.eventRepository = eventRepository;
     }
 
-    public Coupon addCouponToEvent(UUID eventId, CouponRequestDTO data) {
+    public CouponResponseDTO addCouponToEvent(UUID eventId, CouponRequestDTO data) {
         Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new EntityNotFoundException("Coupon not found"));
+                .orElseThrow(() -> new EntityNotFoundException("Event not found"));
 
         Coupon newCoupon = new Coupon();
 
@@ -33,10 +34,16 @@ public class CouponService {
         newCoupon.setEvent(event);
         newCoupon.setValidUntil(data.validUntil());
 
-        return repository.save(newCoupon);
+        repository.save(newCoupon);
+
+        return new CouponResponseDTO(
+                newCoupon.getDiscount(),
+                newCoupon.getCode(),
+                newCoupon.getValidUntil()
+        );
     }
 
     public List<Coupon> getCouponsByEvent(UUID eventId, OffsetDateTime currentDate) {
-        return repository.findByIdAndValidAfter(eventId, currentDate);
+        return repository.findByEventIdAndValidAfter(eventId, currentDate);
     }
 }
