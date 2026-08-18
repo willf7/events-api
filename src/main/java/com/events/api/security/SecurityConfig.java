@@ -25,13 +25,6 @@ public class SecurityConfig {
         "/actuator/**"
     };
 
-    private static final String[] PUBLIC_POST_ROUTES = {
-        "/api/auth/login",
-        "/api/auth/logout",
-        "/api/auth/refresh",
-        "/api/auth/register"
-    };
-
     private final SecurityFilter securityFilter;
 
     public SecurityConfig(SecurityFilter securityFilter) {
@@ -46,8 +39,11 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
                         .dispatcherTypeMatchers(DispatcherType.ERROR).permitAll()
-                        .requestMatchers(HttpMethod.POST, PUBLIC_POST_ROUTES).permitAll()
                         .requestMatchers(HttpMethod.GET, PUBLIC_GET_ROUTES).permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/event").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/coupon/**").authenticated()
+                        .requestMatchers(HttpMethod.DELETE, "/api/event/**").authenticated()
                         .anyRequest().authenticated())
                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
