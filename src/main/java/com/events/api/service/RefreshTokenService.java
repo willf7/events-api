@@ -3,6 +3,7 @@ package com.events.api.service;
 import com.events.api.domain.refreshToken.RefreshToken;
 import com.events.api.domain.refreshToken.RefreshTokenRequestDTO;
 import com.events.api.domain.refreshToken.RefreshTokenResponseDTO;
+import com.events.api.domain.user.LogoutRequestDTO;
 import com.events.api.domain.user.User;
 import com.events.api.exceptions.InternalServerException;
 import com.events.api.exceptions.InvalidRefreshTokenException;
@@ -61,6 +62,15 @@ public class RefreshTokenService {
         repository.save(newRefreshToken);
 
         return token;
+    }
+
+    public void revokeRefreshToken(LogoutRequestDTO data) {
+        String tokenHash = this.hashRefreshToken(data.refreshToken());
+        RefreshToken refreshToken = repository.findByTokenHashAndRevokedAtIsNull(tokenHash)
+                .orElseThrow(InvalidRefreshTokenException::new);
+
+        refreshToken.setRevokedAt(OffsetDateTime.now());
+        repository.save(refreshToken);
     }
 
     private String generateRefreshToken() {

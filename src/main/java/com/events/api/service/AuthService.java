@@ -1,13 +1,9 @@
 package com.events.api.service;
 
-import com.events.api.domain.refreshToken.RefreshTokenRequestDTO;
-import com.events.api.domain.refreshToken.RefreshTokenResponseDTO;
 import com.events.api.domain.user.*;
 import com.events.api.exceptions.DuplicateResourceException;
 import com.events.api.repositories.UserRepository;
 import com.events.api.security.TokenConfig;
-import jakarta.validation.Valid;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -64,9 +60,5 @@ public class AuthService implements UserDetailsService {
         repository.save(newUser);
 
         return new RegisterUserResponseDTO(newUser.getName(), newUser.getEmail());
-    }
-
-    public void logout(@Valid LogoutRequestDTO request) {
-
     }
 }

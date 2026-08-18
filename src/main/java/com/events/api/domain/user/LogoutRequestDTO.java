@@ -1,4 +1,8 @@
 package com.events.api.domain.user;
 
-public record LogoutRequestDTO(String refreshToken) {
-}
+import jakarta.validation.constraints.NotBlank;
+
+public record LogoutRequestDTO(
+        @NotBlank
+        String refreshToken
+) {}
