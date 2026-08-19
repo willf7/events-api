@@ -11,14 +11,13 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 public interface EventRepository extends JpaRepository<Event, UUID> {
-    @Query("SELECT e FROM Event e LEFT JOIN e.address a WHERE e.date >= :currentDate")
-    Page<Event> findUpcomingEvents(@Param("currentDate") OffsetDateTime currentDate, Pageable pageable);
-
     @Query("SELECT e FROM Event e LEFT JOIN e.address a " +
-            "WHERE (:title IS NULL OR e.title LIKE %:title%) " +
-            "AND (:city IS NULL OR a.city LIKE %:city%) " +
-            "AND (:state IS NULL OR a.state LIKE %:state%) " +
-            "AND (e.date >= :startDate AND e.date <= :endDate)")
+            "WHERE (:title IS NULL OR LOWER(e.title) LIKE CONCAT('%', LOWER(:title), '%')) " +
+            "AND (:city IS NULL OR LOWER(a.city) LIKE CONCAT('%', LOWER(:city), '%')) " +
+            "AND (:state IS NULL OR LOWER(a.state) LIKE CONCAT('%', LOWER(:state), '%')) " +
+            "AND (:startDate IS NULL OR e.date >= :startDate) " +
+            "AND (:endDate IS NULL OR e.date <= :endDate) " +
+            "ORDER BY e.date ASC")
     Page<Event> findFilteredEvents(@Param("title") String title,
                                    @Param("city") String city,
                                    @Param("state") String state,

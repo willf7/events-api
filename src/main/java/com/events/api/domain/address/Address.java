@@ -1,6 +1,6 @@
 package com.events.api.domain.address;
 
-import com.events.api.domain.event.Event;
+import com.events.api.domain.user.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -23,7 +23,7 @@ public class Address {
     private String state;
     private String city;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "event_id")
-    private Event event;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "owner_id", nullable = false)
+    private User owner;
 }
