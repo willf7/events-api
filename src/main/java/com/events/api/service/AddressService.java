@@ -2,7 +2,7 @@ package com.events.api.service;
 
 import com.events.api.domain.address.Address;
 import com.events.api.domain.address.AddressRequestDTO;
-import com.events.api.domain.event.Event;
+import com.events.api.domain.user.User;
 import com.events.api.repositories.AddressRepository;
 import org.springframework.stereotype.Service;
 
@@ -14,10 +14,10 @@ public class AddressService {
         this.repository = repository;
     }
 
-    public Address createAddress(Event event, AddressRequestDTO data) {
+    public Address createAddress(User owner, AddressRequestDTO data) {
         Address address = new Address();
+        address.setOwner(owner);
         address.setCity(data.city());
-        address.setEvent(event);
         address.setState(data.state());
 
         return repository.save(address);

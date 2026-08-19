@@ -1,18 +1,23 @@
 package com.events.api.service;
 
-import com.events.api.security.JWTUserData;
+import com.events.api.domain.address.Address;
 import com.events.api.domain.address.AddressRequestDTO;
 import com.events.api.domain.common.PageResponseDTO;
 import com.events.api.domain.coupon.Coupon;
 import com.events.api.domain.event.Event;
 import com.events.api.domain.event.EventDetailsDTO;
+import com.events.api.domain.event.EventMapper;
 import com.events.api.domain.event.EventRequestDTO;
 import com.events.api.domain.event.EventResponseDTO;
+import com.events.api.domain.event.EventSearchRequestDTO;
+import com.events.api.domain.event.EventUpdateRequestDTO;
 import com.events.api.domain.user.User;
 import com.events.api.exceptions.EntityNotFoundException;
 import com.events.api.exceptions.FileUploadException;
+import com.events.api.repositories.AddressRepository;
 import com.events.api.repositories.EventRepository;
 import com.events.api.repositories.UserRepository;
+import com.events.api.security.JWTUserData;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -36,50 +41,32 @@ public class EventService {
     private String bucket;
 
     private final S3Client s3Client;
-    private final EventRepository repository;
+    private final EventRepository eventRepository;
     private final AddressService addressService;
     private final CouponService couponService;
     private final UserRepository userRepository;
+    private final AddressRepository addressRepository;
 
-    public EventService(S3Client s3Client, EventRepository repository, AddressService addressService, CouponService couponService, UserRepository userRepository) {
+    public EventService(S3Client s3Client, EventRepository eventRepository, AddressService addressService, CouponService couponService, UserRepository userRepository, AddressRepository addressRepository) {
         this.s3Client = s3Client;
-        this.repository = repository;
+        this.eventRepository = eventRepository;
         this.addressService = addressService;
         this.couponService = couponService;
         this.userRepository = userRepository;
+        this.addressRepository = addressRepository;
     }
 
-    public EventResponseDTO createEvent(EventRequestDTO data, JWTUserData user) {
-        User owner = userRepository.findById(user.userId())
+    public EventResponseDTO create(EventRequestDTO request, JWTUserData userData) {
+        User owner = userRepository.findById(userData.userId())
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
-        String imgUrl = this.uploadImage(data.image());
+        String imgUrl = this.uploadImage(request.image());
+        Address address = resolveAddress(request.remote(), request.addressId(), request.city(), request.state(), owner);
 
-        Event newEvent = new Event();
-        newEvent.setTitle(data.title());
-        newEvent.setDescription(data.description());
-        newEvent.setEventUrl(data.eventUrl());
-        newEvent.setImgUrl(imgUrl);
-        newEvent.setRemote(data.remote());
-        newEvent.setDate(data.date());
-        newEvent.setOwner(owner);
+        Event event = EventMapper.toEntity(request, owner, imgUrl, address);
 
-        repository.save(newEvent);
+        eventRepository.save(event);
 
-        if (Boolean.FALSE.equals(data.remote())) {
-            addressService.createAddress(newEvent, new AddressRequestDTO(data.state(), data.city()));
-        }
-
-        return new EventResponseDTO(
-                newEvent.getId(),
-                newEvent.getTitle(),
-                newEvent.getDescription(),
-                newEvent.getEventUrl(),
-                newEvent.getRemote(),
-                newEvent.getAddress() != null ? newEvent.getAddress().getCity() : "",
-                newEvent.getAddress() != null ? newEvent.getAddress().getState() : "",
-                newEvent.getDate(),
-                newEvent.getImgUrl()
-        );
+        return EventMapper.toResponseDTO(event);
     }
 
     private String uploadImage(MultipartFile multipartFile) {
@@ -116,65 +103,72 @@ public class EventService {
         }
     }
 
-    public PageResponseDTO<EventResponseDTO> getUpcomingEvents(int page, int size) {
+    public PageResponseDTO<EventResponseDTO> findAll(int page, int size, EventSearchRequestDTO request) {
         Pageable pageable = PageRequest.of(page, size);
-        Page<Event> eventsPage = repository.findUpcomingEvents(OffsetDateTime.now(), pageable);
+        String title = blankToNull(request.title());
+        String city = blankToNull(request.city());
+        String state = blankToNull(request.state());
+        OffsetDateTime startDate = request.startDate() != null
+                ? request.startDate()
+                : OffsetDateTime.now();
+        OffsetDateTime endDate = request.endDate();
 
-        return PageResponseDTO.from(eventsPage.map(this::toResponseDTO));
+        Page<Event> events = eventRepository.findFilteredEvents(title, city, state, startDate, endDate, pageable);
+
+        return PageResponseDTO.from(events.map(EventMapper::toResponseDTO));
     }
 
-    public PageResponseDTO<EventResponseDTO> getFilteredEvents(int page, int size, String title, String city, String state, OffsetDateTime startDate, OffsetDateTime endDate) {
-        Pageable pageable = PageRequest.of(page, size);
-        Page<Event> eventsPage = repository.findFilteredEvents(title, city, state, startDate, endDate, pageable);
+    private String blankToNull(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
 
-        return PageResponseDTO.from(eventsPage.map(this::toResponseDTO));
+        return value.trim();
     }
 
-    public EventDetailsDTO getEventDetails(UUID eventId) {
-        Event event = repository.findById(eventId)
+    public EventDetailsDTO findById(UUID eventId) {
+        Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EntityNotFoundException("Event not found"));
 
         List<Coupon> coupons = couponService.getCouponsByEvent(event.getId(), OffsetDateTime.now());
 
-        List<EventDetailsDTO.CouponDTO> couponDTOS = coupons.stream()
-                .map(coupon -> new EventDetailsDTO.CouponDTO(
-                        coupon.getCode(),
-                        coupon.getDiscount(),
-                        coupon.getValidUntil()
-                )).toList();
-
-        return new EventDetailsDTO(
-                event.getId(),
-                event.getTitle(),
-                event.getDescription(),
-                event.getEventUrl(),
-                event.getRemote(),
-                event.getAddress() != null ?  event.getAddress().getCity() : "",
-                event.getAddress() != null ? event.getAddress().getState() : "",
-                event.getDate(),
-                event.getImgUrl(),
-                couponDTOS
-                );
+        return EventMapper.toDetailsDTO(event, coupons);
     }
 
-    public void deleteEvent(UUID eventId) {
-        Event event = repository.findById(eventId)
+    public EventResponseDTO update(UUID eventId, EventUpdateRequestDTO request) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new EntityNotFoundException("Event not found"));
+        Address address = resolveAddress(request.remote(), request.addressId(), request.city(), request.state(), event.getOwner());
+        String imageUrl = null;
+
+        if (request.image() != null && !request.image().isEmpty()) {
+            imageUrl = this.uploadImage(request.image());
+        }
+
+        EventMapper.updateEntity(event, request, imageUrl, address);
+
+        Event savedEvent = eventRepository.save(event);
+
+        return EventMapper.toResponseDTO(savedEvent);
+    }
+
+    private Address resolveAddress(Boolean remote, UUID addressId, String city, String state, User owner) {
+        if (Boolean.TRUE.equals(remote)) {
+            return null;
+        }
+
+        if (addressId != null) {
+            return addressRepository.findByIdAndOwnerId(addressId, owner.getId())
+                    .orElseThrow(() -> new EntityNotFoundException("Address not found"));
+        }
+
+        return addressService.createAddress(owner, new AddressRequestDTO(state, city));
+    }
+
+    public void delete(UUID eventId) {
+        Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new EntityNotFoundException("Event not found"));
 
-        repository.delete(event);
-    }
-
-    private EventResponseDTO toResponseDTO(Event event) {
-        return new EventResponseDTO(
-                event.getId(),
-                event.getTitle(),
-                event.getDescription(),
-                event.getEventUrl(),
-                event.getRemote(),
-                event.getAddress() != null ? event.getAddress().getCity() : "",
-                event.getAddress() != null ? event.getAddress().getState() : "",
-                event.getDate(),
-                event.getImgUrl()
-        );
+        eventRepository.delete(event);
     }
 }

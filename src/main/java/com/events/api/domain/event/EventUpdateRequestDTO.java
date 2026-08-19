@@ -8,7 +8,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
-public record EventRequestDTO(
+public record EventUpdateRequestDTO(
         @NotBlank(message = "The title can't be empty")
         @Size(min = 2, max = 50, message = "The title must be 2 to 50 characters")
         String title,
@@ -17,7 +17,6 @@ public record EventRequestDTO(
         @Size(max = 50, message = "The description cannot exceed 50 characters")
         String description,
 
-        @NotNull(message = "The image is required")
         @ValidImage
         MultipartFile image,
 

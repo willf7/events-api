@@ -29,10 +29,11 @@ public class Event {
     private Boolean remote;
     private OffsetDateTime date;
 
-    @OneToOne(mappedBy = "event", cascade = CascadeType.ALL)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "address_id")
     private Address address;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "owner_id")
+    @JoinColumn(name = "owner_id", nullable = false)
     private User owner;
 }
