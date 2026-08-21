@@ -46,14 +46,16 @@ public class EventService {
     private final CouponService couponService;
     private final UserRepository userRepository;
     private final AddressRepository addressRepository;
+    private final EventMapper eventMapper;
 
-    public EventService(S3Client s3Client, EventRepository eventRepository, AddressService addressService, CouponService couponService, UserRepository userRepository, AddressRepository addressRepository) {
+    public EventService(S3Client s3Client, EventRepository eventRepository, AddressService addressService, CouponService couponService, UserRepository userRepository, AddressRepository addressRepository, EventMapper eventMapper) {
         this.s3Client = s3Client;
         this.eventRepository = eventRepository;
         this.addressService = addressService;
         this.couponService = couponService;
         this.userRepository = userRepository;
         this.addressRepository = addressRepository;
+        this.eventMapper = eventMapper;
     }
 
     public EventResponseDTO create(EventRequestDTO request, JWTUserData userData) {
@@ -62,11 +64,11 @@ public class EventService {
         String imgUrl = this.uploadImage(request.image());
         Address address = resolveAddress(request.remote(), request.addressId(), request.city(), request.state(), owner);
 
-        Event event = EventMapper.toEntity(request, owner, imgUrl, address);
+        Event event = eventMapper.toEntity(request, owner, imgUrl, address);
 
         eventRepository.save(event);
 
-        return EventMapper.toResponseDTO(event);
+        return eventMapper.toResponseDTO(event);
     }
 
     private String uploadImage(MultipartFile multipartFile) {
@@ -115,7 +117,7 @@ public class EventService {
 
         Page<Event> events = eventRepository.findFilteredEvents(title, city, state, startDate, endDate, pageable);
 
-        return PageResponseDTO.from(events.map(EventMapper::toResponseDTO));
+        return PageResponseDTO.from(events.map(eventMapper::toResponseDTO));
     }
 
     private String blankToNull(String value) {
@@ -132,7 +134,7 @@ public class EventService {
 
         List<Coupon> coupons = couponService.getCouponsByEvent(event.getId(), OffsetDateTime.now());
 
-        return EventMapper.toDetailsDTO(event, coupons);
+        return eventMapper.toDetailsDTO(event, coupons);
     }
 
     public EventResponseDTO update(UUID eventId, EventUpdateRequestDTO request) {
@@ -145,11 +147,15 @@ public class EventService {
             imageUrl = this.uploadImage(request.image());
         }
 
-        EventMapper.updateEntity(event, request, imageUrl, address);
+        eventMapper.updateEntity(event, request, address);
+
+        if (imageUrl != null) {
+            event.setImgUrl(imageUrl);
+        }
 
         Event savedEvent = eventRepository.save(event);
 
-        return EventMapper.toResponseDTO(savedEvent);
+        return eventMapper.toResponseDTO(savedEvent);
     }
 
     private Address resolveAddress(Boolean remote, UUID addressId, String city, String state, User owner) {

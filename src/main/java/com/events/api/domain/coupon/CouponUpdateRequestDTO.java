@@ -4,15 +4,12 @@ import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import java.time.OffsetDateTime;
-import java.util.Set;
-import java.util.UUID;
 
-public record CouponRequestDTO(
+public record CouponUpdateRequestDTO(
         @NotNull(message = "The discount is required")
         @Min(value = 1, message = "The discount must be at least 1%")
         @Max(value = 100, message = "The discount cannot exceed 100%")
@@ -26,13 +23,12 @@ public record CouponRequestDTO(
         @Future(message = "The expiration date must be in the future")
         OffsetDateTime validUntil,
 
+        @NotNull(message = "The active field is required")
         Boolean active,
 
+        @NotNull(message = "The singleUsePerUser field is required")
         Boolean singleUsePerUser,
 
         @Min(value = 1, message = "The maximum uses must be at least 1")
-        Integer maxUses,
-
-        @NotEmpty(message = "At least one event is required")
-        Set<UUID> eventIds
+        Integer maxUses
 ) {}

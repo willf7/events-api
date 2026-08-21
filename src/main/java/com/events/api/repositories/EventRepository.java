@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.OffsetDateTime;
+import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 
 public interface EventRepository extends JpaRepository<Event, UUID> {
@@ -24,4 +26,6 @@ public interface EventRepository extends JpaRepository<Event, UUID> {
                                    @Param("startDate") OffsetDateTime startDate,
                                    @Param("endDate") OffsetDateTime endDate,
                                    Pageable pageable);
+
+    List<Event> findByIdInAndOwnerId(Collection<UUID> ids, UUID ownerId);
 }

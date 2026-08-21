@@ -17,8 +17,13 @@ public record EventDetailsDTO(
         List<CouponDTO> coupons
 ) {
     public record CouponDTO(
+            UUID id,
             String code,
             Integer discount,
-            OffsetDateTime validUntil
+            OffsetDateTime validUntil,
+            Boolean active,
+            Boolean singleUsePerUser,
+            Integer maxUses,
+            Integer usesCount
     ) {}
 }
