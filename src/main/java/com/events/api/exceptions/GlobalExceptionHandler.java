@@ -1,6 +1,6 @@
 package com.events.api.exceptions;
 
-import com.events.api.domain.common.ValidationErrorDTO;
+import com.events.api.common.dto.ValidationErrorDTO;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
