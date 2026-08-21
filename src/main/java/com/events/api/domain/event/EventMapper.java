@@ -2,75 +2,36 @@ package com.events.api.domain.event;
 
 import com.events.api.domain.address.Address;
 import com.events.api.domain.coupon.Coupon;
+import com.events.api.domain.coupon.CouponMapper;
 import com.events.api.domain.user.User;
+import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
+import org.mapstruct.MappingTarget;
 
 import java.util.List;
 
-public final class EventMapper {
-    private EventMapper() {
-    }
+@Mapper(componentModel = "spring", uses = CouponMapper.class)
+public interface EventMapper {
+    @Mapping(target = "city", source = "address.city")
+    @Mapping(target = "state", source = "address.state")
+    EventResponseDTO toResponseDTO(Event event);
 
-    public static EventResponseDTO toResponseDTO(Event event) {
-        return new EventResponseDTO(
-                event.getId(),
-                event.getTitle(),
-                event.getDescription(),
-                event.getEventUrl(),
-                event.getRemote(),
-                event.getAddress() != null ? event.getAddress().getCity() : "",
-                event.getAddress() != null ? event.getAddress().getState() : "",
-                event.getDate(),
-                event.getImgUrl()
-        );
-    }
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "owner", source = "owner")
+    @Mapping(target = "imgUrl", source = "imgUrl")
+    @Mapping(target = "address", source = "address")
+    @Mapping(target = "coupons", ignore = true)
+    Event toEntity(EventRequestDTO request, User owner, String imgUrl, Address address);
 
-    public static Event toEntity(EventRequestDTO request, User owner, String imgUrl, Address address) {
-        Event event = new Event();
-        event.setTitle(request.title());
-        event.setDescription(request.description());
-        event.setEventUrl(request.eventUrl());
-        event.setImgUrl(imgUrl);
-        event.setRemote(request.remote());
-        event.setDate(request.date());
-        event.setOwner(owner);
-        event.setAddress(address);
+    @Mapping(target = "city", source = "event.address.city")
+    @Mapping(target = "state", source = "event.address.state")
+    @Mapping(target = "coupons", source = "coupons")
+    EventDetailsDTO toDetailsDTO(Event event, List<Coupon> coupons);
 
-        return event;
-    }
-
-    public static EventDetailsDTO toDetailsDTO(Event event, List<Coupon> coupons) {
-        List<EventDetailsDTO.CouponDTO> couponDTOS = coupons.stream()
-                .map(coupon -> new EventDetailsDTO.CouponDTO(
-                        coupon.getCode(),
-                        coupon.getDiscount(),
-                        coupon.getValidUntil()
-                ))
-                .toList();
-
-        return new EventDetailsDTO(
-                event.getId(),
-                event.getTitle(),
-                event.getDescription(),
-                event.getEventUrl(),
-                event.getRemote(),
-                event.getAddress() != null ? event.getAddress().getCity() : "",
-                event.getAddress() != null ? event.getAddress().getState() : "",
-                event.getDate(),
-                event.getImgUrl(),
-                couponDTOS
-        );
-    }
-
-    public static void updateEntity(Event event, EventUpdateRequestDTO request, String imgUrl, Address address) {
-        event.setTitle(request.title());
-        event.setDescription(request.description());
-        event.setEventUrl(request.eventUrl());
-        event.setRemote(request.remote());
-        event.setDate(request.date());
-        event.setAddress(address);
-
-        if (imgUrl != null) {
-            event.setImgUrl(imgUrl);
-        }
-    }
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "imgUrl", ignore = true)
+    @Mapping(target = "owner", ignore = true)
+    @Mapping(target = "address", source = "address")
+    @Mapping(target = "coupons", ignore = true)
+    void updateEntity(@MappingTarget Event event, EventUpdateRequestDTO request, Address address);
 }

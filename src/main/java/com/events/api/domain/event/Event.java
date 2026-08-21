@@ -1,6 +1,7 @@
 package com.events.api.domain.event;
 
 import com.events.api.domain.address.Address;
+import com.events.api.domain.coupon.Coupon;
 import com.events.api.domain.user.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -9,6 +10,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.OffsetDateTime;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 @Table(name = "event")
@@ -36,4 +39,7 @@ public class Event {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id", nullable = false)
     private User owner;
+
+    @ManyToMany(mappedBy = "events")
+    private Set<Coupon> coupons = new HashSet<>();
 }
